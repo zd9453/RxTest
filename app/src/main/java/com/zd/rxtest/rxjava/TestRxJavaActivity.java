@@ -19,6 +19,7 @@ import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
@@ -44,6 +45,9 @@ public class TestRxJavaActivity extends AppCompatActivity {
         getInfoFromInternet();
 
 //        flatMapCreate();
+
+//        zipCreate();
+
     }
 
     /**
@@ -215,6 +219,54 @@ public class TestRxJavaActivity extends AppCompatActivity {
                 Log.d(TAG, "onNext: ---------------" + model);
             }
         }));
+    }
+
+    /**
+     * zip操作符测试
+     */
+    private void zipCreate() {
+        Observable<String> stringObservable = Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(@NonNull ObservableEmitter<String> e) throws Exception {
+                e.onNext("1");
+                e.onNext("2");
+                e.onNext("3");
+                e.onNext("4");
+                e.onNext("5");
+                e.onNext("6");
+                e.onComplete();
+//                e.onError(new Throwable("1 end"));
+            }
+        }).subscribeOn(Schedulers.io());
+
+        Observable<Integer> integerObservable = Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(@NonNull ObservableEmitter<Integer> e) throws Exception {
+                e.onNext(11);
+                e.onNext(22);
+                e.onNext(33);
+                e.onComplete();
+//                e.onError(new Throwable("2 end"));
+            }
+        }).subscribeOn(Schedulers.io());
+
+        Observable.zip(stringObservable, integerObservable, new BiFunction<String, Integer, String>() {
+            @Override
+            public String apply(@NonNull String s, @NonNull Integer integer) throws Exception {
+                return s + " with " + integer;
+            }
+        })
+                .subscribe(new MObserver<>(new CallBackInter<String>() {
+                    @Override
+                    public void onError(String msg) {
+                        Log.d(TAG, "onError: ---------" + msg);
+                    }
+
+                    @Override
+                    public void onNext(String model) {
+                        Log.d(TAG, "onNext: ----------" + model);
+                    }
+                }));
     }
 
     /**
